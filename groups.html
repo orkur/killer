@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zespoły</title>
+</head>
+<body>
+
+    <h1>Zespoły</h1>
+
+    <form id="zespolForm">
+        <label for="nazwa">Nazwa zespołu:</label>
+        <input type="text" id="nazwa" name="nazwa" required>
+
+        <label for="opis">Opis:</label>
+        <textarea id="opis" name="opis"></textarea>
+
+        <button type="button" onclick="dodajZespol()">Dodaj Zespół</button>
+    </form>
+
+    <h2>Lista Zespołów</h2>
+    <table id="zespolTable" border="1">
+        <tr>
+            <th>ID</th>
+            <th>Nazwa</th>
+            <th>Opis</th>
+        </tr>
+    </table>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        function dodajZespol() {
+            const nazwa = document.getElementById('nazwa').value;
+            const opis = document.getElementById('opis').value;
+            console.log("Nazwa:", nazwa);
+            console.log("Opis:", opis);
+            const post = {
+                nazwa: nazwa,
+                opis: opis,
+            };
+            console.log(post);
+            axios.post('http://localhost:5000/zespol/', post)
+            .then(response => {
+                console.log(response.data);
+                dodajZespolDoTabeli(response.data);
+            })
+            .catch(error => {
+                console.error(error);
+            });
+        }
+
+        function pobierzZespoly() {
+            axios.get('http://localhost:5000/zespoly/')
+            .then(response => {
+                console.log(response.data);
+                response.data.forEach(zespol => dodajZespolDoTabeli(zespol));
+            })
+            .catch(error => {
+                console.error(error);
+            });
+        }
+
+        function dodajZespolDoTabeli(zespol) {
+            const table = document.getElementById('zespolTable');
+            const row = table.insertRow(-1);
+
+            const cell1 = row.insertCell(0);
+            const cell2 = row.insertCell(1);
+            const cell3 = row.insertCell(2);
+
+            cell1.textContent = zespol.id;
+            cell2.textContent = zespol.nazwa;
+            cell3.textContent = zespol.opis;
+        }
+        window.onload = function() {
+            pobierzZespoly();
+        };
+    </script>
+</body>
+</html>
