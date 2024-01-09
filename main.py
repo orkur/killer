@@ -1,12 +1,9 @@
-
 from fastapi import FastAPI, HTTPException, Depends
 from sqlalchemy.orm import Session
+from sqlalchemy import delete
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from tables import Zespol, SessionLocal
-
-
-
+from tables import Team, SessionLocal
 
 app = FastAPI()
 
@@ -20,6 +17,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 def get_db():
     db = SessionLocal()
     try:
@@ -27,33 +25,48 @@ def get_db():
     finally:
         db.close()
 
-class ZespolDoWpisania(BaseModel):
-    nazwa : str
-    opis: str = None
 
-@app.post("/zespol/")
-def dodaj_zespol(zespol : ZespolDoWpisania, db: Session = Depends(get_db)):
-    zespol = Zespol(nazwa=zespol.nazwa, opis=zespol.opis)
-    db.add(zespol)
+class TeamToInsert(BaseModel):
+    name: str
+    description: str = None
+
+
+@app.post("/team/")
+def add_team(team: TeamToInsert, db: Session = Depends(get_db)):
+    team = Team(name=team.name, description=team.description)
+    db.add(team)
     db.commit()
-    db.refresh(zespol)
-    return zespol
+    db.refresh(team)
+    return team
 
-@app.get("/zespol/{zespol_id}")
-def pobierz_zespol(zespol_id: int, db: Session = Depends(get_db)):
-    zespol = db.query(Zespol).filter(Zespol.id == zespol_id).first()
-    if zespol:
-        return zespol
+
+@app.get("/team/{team_id}")
+def get_team(team_id: int, db: Session = Depends(get_db)):
+    team = db.query(Team).filter(Team.id == team_id).first()
+    if team:
+        return team
     else:
-        raise HTTPException(status_code=404, detail="Zespół nie został znaleziony")
+        raise HTTPException(status_code=404, detail="Team has not found")
 
-@app.get("/zespoly/")
-def pobierz_zespoly(db: Session = Depends(get_db)):
-    zespoly = db.query(Zespol).all()
-    # for zespol in zespoly:
-    #     print(zespol.id , " " , zespol.nazwa , " " , zespol.opis)
-    return zespoly
 
+@app.get("/teams/")
+def get_teams(db: Session = Depends(get_db)):
+    teams = db.query(Team).all()
+    for team in teams:
+        print(team.name, " ",team.description)
+    return teams
+
+@app.delete("/team/")
+def delete_team(team_id: int, db: Session = Depends(get_db)):
+    team = db.query(Team).filter(Team.id == team_id).first()
+    print("dupa")
+    print(team.id, " ",team.name," ", team.description)
+    if team:
+        db.delete(team)
+        db.commit()
+        return {"message": "team deleted"}
+    else:
+        raise HTTPException(status_code=404, detail="team not found")
 @app.post("/foo/")
 def Witaj():
     return "Witaj Świecie!"
