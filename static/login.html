@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+</head>
+<body>
+
+    <h1>Login</h1>
+
+    <form id="loginForm">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required>
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password"  required>
+
+        <button type="button" onclick="login()">Login</button>
+    </form>
+
+    <button type="button" onclick="register()">Press to register</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+
+        function register(){
+            window.location.href = 'register.html';
+        }
+        function login() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            const credentials = btoa(`${username}:${password}`);
+
+            axios.get('http://localhost:5000/group/', {
+                headers: {
+                    'Authorization': `Basic ${credentials}`
+                }
+            })
+            .then(response => {
+                console.log(response.data);
+                sessionStorage.setItem('authToken', credentials);
+                window.location.href = 'groups.html';
+            })
+            .catch(error => {
+                console.error(error);
+                alert("Invalid credentials");
+            });
+        }
+    </script>
+</body>
+</html>
