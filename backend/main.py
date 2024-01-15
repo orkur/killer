@@ -1,10 +1,11 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.security import HTTPBasic
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 
-from dependencies.tables import User, get_db
-from routers import team, user
+from backend.dependencies.tables import get_db, User
+from backend.routers import team, user
 
 app = FastAPI()
 security = HTTPBasic()

@@ -9,7 +9,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zespoły</title>
+    <title>Teams</title>
     <style>
 
         th.column-limit,
@@ -26,18 +26,18 @@
     </style>
 </head>
 <body>
-    <h2 id="userInfo">User Information</h2>
+    <h2 id="userInfo">Hello </h2>
     <button type="button" onclick="logout()">Logout</button>
-    <h1>Zespoły</h1>
+    <h1>Teams</h1>
 
-    <form id="zespolForm">
-        <label for="nazwa">Nazwa zespołu:</label>
-        <input type="text" id="nazwa" name="nazwa" required>
+    <form id="teamForm">
+        <label for="name">Team name:</label>
+        <input type="text" id="name" name="name" required>
 
-        <label for="opis">Opis:</label>
-        <textarea id="opis" name="opis"></textarea>
+        <label for="description">Description:</label>
+        <textarea id="description" name="description"></textarea>
 
-        <button type="button" onclick="dodajZespol()">Dodaj Zespół</button>
+        <button type="button" onclick="addTeam()">Add Team</button>
     </form>
 
     <h2>List of Teams</h2>
@@ -47,11 +47,15 @@
                 <th>ID</th>
                 <th>Name</th>
                 <th>Description</th>
+                <th>Action</th>
             </tr>
         </thead>
         <tbody id="tableBody"></tbody>
 
     </table>
+    <button type="button" onclick="getUserIdFromToken(sessionStorage.getItem('authToken'))">Click me!</button>
+    <script>var exports = {};</script>
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
@@ -59,50 +63,38 @@
             sessionStorage.removeItem('authToken');
             window.location.href = "login.html"
         }
-        function dodajZespol() {
-            const name = document.getElementById('nazwa').value;
-            const description = document.getElementById('opis').value;
-            console.log("Nazwa:", name);
-            console.log("Opis:", description);
+        function addTeam() {
+            const name = document.getElementById('name').value;
+            const description = document.getElementById('description').value;
             const post = {
                 name: name,
                 description: description,
+                creator: jwtDecode(authToken).id
             };
             console.log(post);
             axios.post('http://localhost:5000/team/', post)
             .then(response => {
                 console.log(response.data);
-                dodajZespolDoTabeli(response.data);
+                addTeamToTable(response.data);
             })
             .catch(error => {
                 console.error(error);
             });
         }
 
-        function pobierzZespoly() {
+        function getTeams() {
             axios.get('http://localhost:5000/teams/')
             .then(response => {
                 console.log(response.data);
-                response.data.forEach(zespol => dodajZespolDoTabeli(zespol));
-                // const decodedToken = jwt_decode(authToken);
-                // const user = decodedToken.user;
+                response.data.forEach(zespol => addTeamToTable(zespol));
             })
             .catch(error => {
                 console.error(error);
             });
         }
 
-        function dodajZespolDoTabeli(team) {
-            // const table = document.getElementById('zespolTable');
-            // const row = table.insertRow(-1);
-            //
-            // const cell1 = row.insertCell(0);
-            // const cell2 = row.insertCell(1);
-            // const cell3 = row.insertCell(2);
-            //
-            // cell1.textContent = zespol.id;
-            // cell2.textContent = zespol.name;
-            // cell3.textContent = zespol.description;
+        function addTeamToTable(team) {
+
             const row = document.createElement('tr');
             const cell1 = document.createElement('td');
             const cell2 = document.createElement('td');
@@ -121,12 +113,11 @@
             tableBody.appendChild(row);
         }
         window.onload = function() {
-            pobierzZespoly();
+            document.getElementById('userInfo').textContent = "Hello " + jwtDecode(authToken).username + '!'
+
+            getTeams();
         };
-        function displayUserInfo(user) {
-            const userInfoElement = document.getElementById('userInfo');
-            userInfoElement.textContent = `User Information: ${user.name}`;
-        }
+
     </script>
 </body>
 </html>

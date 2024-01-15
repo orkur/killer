@@ -4,11 +4,17 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette import status
 
-from dependencies.tables import get_db, User
-from models.models import UserToInsert
-from routers.hasher import verify_password, ACCESS_TOKEN_EXPIRE_MINUTES, create_jwt_token, password_hasher
+from backend.dependencies.tables import get_db, User
+from backend.models.models import UserToInsert
+from backend.routers.hasher import verify_password, ACCESS_TOKEN_EXPIRE_MINUTES, create_jwt_token, password_hasher
 
 router = APIRouter()
+
+
+def make_user_data(user_id: int, name: str) -> dict:
+    return {"id": user_id, "username": name}
+
+
 @router.post("/login/")
 def login_user(form: dict, db: Session = Depends(get_db)):
     username = form.get("username")
@@ -17,7 +23,7 @@ def login_user(form: dict, db: Session = Depends(get_db)):
     if not user or not verify_password(password, user.password):
         raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                             detail="Invalid credentials", headers={"WWW-Authenticate": "Bearer"})
-    user_data = {"sub": user.id, "username": user.username}
+    user_data = make_user_data(user.id, user.username)
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_jwt_token(data=user_data, expires_delta=access_token_expires)
 
@@ -37,7 +43,7 @@ def register_user(new_user: UserToInsert, db: Session = Depends(get_db)):
     db.add(user)
     db.commit()
     db.refresh(user)
-    user_data = {"sub": user.id, "username": user.username}
+    user_data = make_user_data(user.id, user.username)
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_jwt_token(data=user_data, expires_delta=access_token_expires)
     return {"access_token": access_token, "token_type": "bearer", "message": "User registered successfully"}
