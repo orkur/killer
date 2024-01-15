@@ -37,23 +37,23 @@
         <label for="description">Description:</label>
         <textarea id="description" name="description"></textarea>
 
+        <label for="password">Password:</label>
+        <input type="text" id="password" name="password" placeholder="maximum 24 characters" >
         <button type="button" onclick="addTeam()">Add Team</button>
     </form>
 
     <h2>List of Teams</h2>
-    <table id="zespolTable" border="1">
+    <table id="zespolTable" border="2">
         <thead>
             <tr>
                 <th>ID</th>
                 <th>Name</th>
                 <th>Description</th>
-                <th>Action</th>
             </tr>
         </thead>
         <tbody id="tableBody"></tbody>
 
     </table>
-    <button type="button" onclick="getUserIdFromToken(sessionStorage.getItem('authToken'))">Click me!</button>
     <script>var exports = {};</script>
     <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.min.js"></script>
 
@@ -66,31 +66,33 @@
         function addTeam() {
             const name = document.getElementById('name').value;
             const description = document.getElementById('description').value;
+            const password = document.getElementById('password').value;
             const post = {
                 name: name,
                 description: description,
-                creator: jwtDecode(authToken).id
+                creator: jwtDecode(authToken).id,
+                password: password
             };
             console.log(post);
             axios.post('http://localhost:5000/team/', post)
-            .then(response => {
-                console.log(response.data);
-                addTeamToTable(response.data);
-            })
-            .catch(error => {
-                console.error(error);
-            });
+                .then(response => {
+                    console.log(response.data);
+                    addTeamToTable(response.data);
+                })
+                .catch(error => {
+                    alert(error.response.data.detail);
+                });
         }
 
         function getTeams() {
             axios.get('http://localhost:5000/teams/')
-            .then(response => {
-                console.log(response.data);
-                response.data.forEach(zespol => addTeamToTable(zespol));
-            })
-            .catch(error => {
-                console.error(error);
-            });
+                .then(response => {
+                    console.log(response.data);
+                    response.data.forEach(zespol => addTeamToTable(zespol));
+                })
+                .catch(error => {
+                    console.error(error);
+                });
         }
 
         function addTeamToTable(team) {
@@ -99,22 +101,92 @@
             const cell1 = document.createElement('td');
             const cell2 = document.createElement('td');
             const cell3 = document.createElement('td');
+            const cell4 = document.createElement('td');
+            // const cell5 = document.createElement('td')
 
             cell1.textContent = team.id;
             cell2.className = 'column-limit';
             cell2.textContent = team.name;
-            cell3.className = 'column-limit'
-            cell3.textContent = team.description
+            cell3.className = 'column-limit';
+            cell3.textContent = team.description;
+            const form = document.createElement("form")
+
+
+            var button = document.createElement("input"); //input element, Submit button
+            button.type="submit"
+
+
+            const relation = {
+                team_id: team.id,
+                user_id: jwtDecode(authToken).id
+            }
+
+            axios.get('http://localhost:5000/exist/', {params: relation})
+                .then(response => {
+                    if (response.data) {
+                        button.onclick = () => exitFrom(relation);
+                        button.value = 'Exit';
+                    } else {
+                        var i = document.createElement("input"); //input element, text
+                        i.type="text";
+                        i.name="password"
+                        i.id="team_password" + team.id
+                        form.appendChild(i);
+                        button.onclick = () => joinIn(relation)
+                        // button.add = joinIn(relation);
+                        button.value = 'Join';
+                    }
+                })
+            form.appendChild(button);
+
+
+            // axios.get('http://localhost:5000/exist/', {params: relation})
+            //     .then(response => {
+            //         if(response.data){
+            //             button.textContent = 'Exit'
+            //             button.addEventListener('click', () => ExitFrom(relation));
+            //         }else{
+            //             button.textContent = 'Join'
+            //
+            //             button.addEventListener('click', () => joinIn(relation, document.getElementById('team_password').value));
+            //         }
+            //
+            //     }
+            // )
+            cell4.appendChild(form);
 
             row.appendChild(cell1);
             row.appendChild(cell2);
             row.appendChild(cell3);
+            row.appendChild(cell4);
+            // row.appendChild(cell5)
 
             tableBody.appendChild(row);
         }
+        async function joinIn(relation) {
+            relation['password'] = document.getElementById('team_password' + relation.team_id).value
+            console.log(relation['password'])
+            try {
+                await axios.post('http://localhost:5000/relation/join/', relation)
+            } catch (error){
+                alert(error.response.data.detail)
+            }
+            window.location.href=window.location.href
+        }
+        async function exitFrom(relation) {
+            try {
+                await axios.post('http://localhost:5000/relation/exit/', relation)
+            } catch (error){
+                alert(error.response.data.detail)
+            }
+            window.location.href=window.location.href
+        }
+
         window.onload = function() {
             document.getElementById('userInfo').textContent = "Hello " + jwtDecode(authToken).username + '!'
-
+            if (!authToken) {
+                window.location.href = 'login.html';
+            }
             getTeams();
         };
 

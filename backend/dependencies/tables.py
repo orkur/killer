@@ -1,7 +1,7 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, ForeignKey
+from sqlalchemy import create_engine, Column, Integer, String, Text, ForeignKey, Table
 
 from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, relationship
 
 SQLALCHEMY_DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/users"
 
@@ -25,7 +25,15 @@ class Team(Base):
     name = Column(String, unique=True, index=True)
     description = Column(Text)
     created_by = Column(Integer, ForeignKey('users.id'))
+    password = Column(String)
+    members = relationship("User", secondary="team_members")
 
+    team_members = Table(
+        "team_members",
+        Base.metadata,
+        Column("user_id", Integer, ForeignKey("users.id")),
+        Column("team_id", Integer, ForeignKey("teams.id")),
+    )
 
 class User(Base):
     __tablename__ = "users"

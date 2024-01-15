@@ -1,15 +1,18 @@
 from fastapi import Depends, APIRouter, HTTPException
 from sqlalchemy.orm import Session
+from starlette import status
 
-from backend.dependencies.tables import Team, get_db
-from backend.models.models import TeamToInsert
+from backend.dependencies.tables import Team, get_db, User
+from backend.models.models import TeamToInsert, JoinToInsert
 
 router = APIRouter()
 
 
 @router.post("/team/")
 def add_team(team: TeamToInsert, db: Session = Depends(get_db)):
-    team = Team(name=team.name, description=team.description, created_by=team.creator)
+    team = Team(name=team.name, description=team.description, created_by=team.creator, password=team.password)
+    if db.query(Team).filter(Team.name == team.name).first():
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="team already exists")
     db.add(team)
     db.commit()
     db.refresh(team)
@@ -44,3 +47,42 @@ def delete_team(team_id: int, db: Session = Depends(get_db)):
         return {"message": "team deleted"}
     else:
         raise HTTPException(status_code=404, detail="team not found")
+
+
+@router.get("/exist/")
+def check_exist(team_id: int, user_id: int, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    team = db.query(Team).filter(Team.id == team_id).first()
+    if user and team and (user in team.members):
+        return True
+    return False
+
+
+@router.post("/relation/join/")
+def join_team(relation: JoinToInsert, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == relation.user_id).first()
+    team = db.query(Team).filter(Team.id == relation.team_id).first()
+    print(relation.password)
+    if team.password != relation.password:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="wrong password")
+    if not user or not team:
+        raise HTTPException(status_code=status.HTTP_418_IM_A_TEAPOT, detail="something unexpected had happeneds. "
+                                                                            "Please refresh your page")
+    if user in team.members:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="user belongs to this team.")
+    team.members.append(user)
+    db.commit()
+    return
+
+
+@router.post("/relation/exit/")
+def exit_team(relation: JoinToInsert, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == relation.user_id).first()
+    team = db.query(Team).filter(Team.id == relation.team_id).first()
+
+    if not user or not team:
+        raise HTTPException(status_code=status.HTTP_418_IM_A_TEAPOT, detail="something unexpected had happeneds. "
+                                                                            "Please refresh your page")
+    team.members.remove(user)
+    db.commit()
+    return
