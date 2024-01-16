@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <script>
     const authToken = sessionStorage.getItem('authToken');
-    const teamToken = sessionStorage.getItem('teamToken')
+    console.log(sessionStorage.getItem('teamToken'))
+    const teamToken = JSON.parse(sessionStorage.getItem('teamToken'))
     if (!authToken) {
         window.location.href = 'login.html';
     }
@@ -30,7 +31,7 @@
         }
         window.onload = function() {
             document.getElementById('userInfo').textContent = "Hello " + jwtDecode(authToken).username + '!'
-            document.getElementById('teamInfo').textContent = "You are in " + teamToken.team_name + " team!"
+            document.getElementById('teamInfo').textContent = "You are in \"" + teamToken.name + "\" team!"
             if (!authToken) {
                 window.location.href = 'login.html';
             }

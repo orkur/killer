@@ -95,18 +95,19 @@
             });
         }
 
-        function createGetIntoButton(id){
+        function createGetIntoButton(relation){
             const getInto = document.createElement("input");
-            getInto.id = "getInto" + id
+            getInto.id = "getInto" + relation.team_id
             getInto.type = "button"
             getInto.value = "get to the team page"
-            getInto.onclick = () => getToTeamPage(id)
+            getInto.onclick = () => getToTeamPage(relation.team_id, relation.team_name)
             return getInto
         }
         function addTeamToTable(team, signed) {
             const relation = {
                 team_id: team.id,
-                user_id: jwtDecode(authToken).id
+                user_id: jwtDecode(authToken).id,
+                team_name: team.name
             }
 
             const row = document.createElement('tr');
@@ -132,7 +133,7 @@
             if (signed) {
                 button.onclick = () => exitFrom(relation);
                 button.value = 'Exit';
-                form.appendChild(createGetIntoButton(team.id))
+                form.appendChild(createGetIntoButton(relation))
             } else {
                 i = document.createElement("input");
                 i.type = "text";
@@ -167,7 +168,7 @@
                 form.removeChild(i)
                 button.value='Exit'
                 button.onclick = () => exitFrom(relation);
-                form.appendChild(createGetIntoButton(relation.team_id))
+                form.appendChild(createGetIntoButton(relation))
 
             } catch (error){
                 alert(error.response.data.detail)
@@ -195,7 +196,7 @@
         }
 
         function getToTeamPage(id, name){
-            sessionStorage.setItem('teamToken', {id: id, name: name})
+            sessionStorage.setItem('teamToken', JSON.stringify({id: id, name: name}));
             window.location.href = 'team.html'
         }
 
