@@ -28,19 +28,33 @@ def get_team(team_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Team has not found")
 
 
-@router.get("/teams/")
 def get_teams(db: Session = Depends(get_db)):
     teams = db.query(Team).all()
     teams = [team.public for team in teams]
-    teams.sort(key=lambda team: team['name'])  # unit tests, don't change
     return teams
 
 
-@router.get("/relation/userTeams/")
-def list_all_joined_teams(user_id: int, db: Session = Depends(get_db)):
+def list_all_id_of_joined_teams(user_id: int, db: Session = Depends(get_db)):
     teams = db.query(Team.id, Team.name).filter(Team.members.any(id=user_id)).all()
-    teams = sorted(teams, key=lambda team: team[1])  # unit tests, don't change
-    teams = [team[0] for team in teams]
+    return teams
+
+
+@router.get("/relation/list")
+def list_of_relation_with_teams(user_id: int, db: Session = Depends(get_db)):
+    teams = sorted(get_teams(db), key=lambda team: team['name'])
+    occupying_teams = sorted(list_all_id_of_joined_teams(user_id, db), key=lambda team: team[1])
+    occupying_teams = [team[0] for team in occupying_teams]
+    i = 0
+
+    def f(team, occupying_teams):
+        nonlocal i
+        if occupying_teams and i < len(occupying_teams) and team['id'] == occupying_teams[i]:
+            i += 1
+            return {'l': team, 'r': True}
+        else:
+            return {'l': team, 'r': False}
+
+    teams = [f(team, occupying_teams) for team in teams]
     return teams
 
 
