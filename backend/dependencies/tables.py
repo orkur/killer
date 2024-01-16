@@ -1,4 +1,4 @@
-from sqlalchemy import create_engine, Column, Integer, String, Text, ForeignKey, Table
+from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, ForeignKey, Table
 
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
@@ -35,7 +35,8 @@ class Team(Base):
     created_by = Column(Integer, ForeignKey('users.id'))
     password = Column(String)
     members = relationship("User", secondary="team_members")
-
+    closed = Column(Boolean, default=False)
+    started = Column(Boolean, default=False)
     @hybrid_property
     def public(self):
         return {"id": self.id, "name": self.name, "description": self.description}

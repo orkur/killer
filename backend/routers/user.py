@@ -1,10 +1,11 @@
 from datetime import timedelta
+from enum import member
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from starlette import status
 
-from backend.dependencies.tables import get_db, User
+from backend.dependencies.tables import get_db, User, Team
 from backend.models.models import UserToInsert
 from backend.routers.hasher import verify_password, ACCESS_TOKEN_EXPIRE_MINUTES, create_jwt_token, password_hasher
 
@@ -47,3 +48,9 @@ def register_user(new_user: UserToInsert, db: Session = Depends(get_db)):
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_jwt_token(data=user_data, expires_delta=access_token_expires)
     return {"access_token": access_token, "token_type": "bearer", "message": "User registered successfully"}
+
+@router.get("/players/")
+def get_members_from_team(team_id: int, db: Session = Depends(get_db)):
+    members = db.query(User.id, User.username).filter(User.teams.any(id=team_id)).all()
+    members = [{"id": member.id, "name": member.username} for member in members]
+    return members

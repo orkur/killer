@@ -116,3 +116,10 @@ def exit_team(relation: JoinToInsert, db: Session = Depends(get_db)):
     team.members.remove(user)
     db.commit()
     return
+
+@router.get("/admin/")
+def is_admin(team_id: int, user_id: int,db: Session = Depends(get_db)):
+    if db.query(Team).filter(Team.id==team_id, Team.created_by == user_id).first():
+        return True
+    else:
+        return False
