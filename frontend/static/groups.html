@@ -86,15 +86,24 @@
 
         function getTeams() {
             axios.get('http://localhost:5000/relation/list/', {params: {user_id: jwtDecode(authToken).id}}).then(response =>{
-                response.data.forEach(team => addTeamToTable(team.l, team.r));
+                if (response.data) {
+                    response.data.forEach(team => addTeamToTable(team.l, team.r));
+                }
             })
             .catch(error => {
                 console.error(error);
             });
         }
 
+        function createGetIntoButton(id){
+            const getInto = document.createElement("input");
+            getInto.id = "getInto" + id
+            getInto.type = "button"
+            getInto.value = "get to the team page"
+            getInto.onclick = () => getToTeamPage(id)
+            return getInto
+        }
         function addTeamToTable(team, signed) {
-
             const relation = {
                 team_id: team.id,
                 user_id: jwtDecode(authToken).id
@@ -107,52 +116,44 @@
             const cell4 = document.createElement('td');
 
             cell1.textContent = team.id;
+
             cell2.className = 'column-limit';
             cell2.textContent = team.name;
+
             cell3.className = 'column-limit';
             cell3.textContent = team.description;
+            //cell4
             const form = document.createElement("form")
             form.id = "form" + team.id
             var button = document.createElement("input");
-            button.id = "button"+team.id
-            button.type="button"
+            button.id = "button" + team.id
+            button.type = "button"
             var i;
             if (signed) {
                 button.onclick = () => exitFrom(relation);
                 button.value = 'Exit';
+                form.appendChild(createGetIntoButton(team.id))
             } else {
                 i = document.createElement("input");
-                i.type="text";
-                i.name="password";
-                i.id="team_password" + team.id;
+                i.type = "text";
+                i.name = "password";
+                i.id = "team_password" + team.id;
                 button.onclick = () => joinIn(relation);
                 button.value = 'Join';
             }
             form.appendChild(button);
-            if(i != null) form.appendChild(i);
-
-
-            // axios.get('http://localhost:5000/exist/', {params: relation})
-            //     .then(response => {
-            //         if(response.data){
-            //             button.textContent = 'Exit'
-            //             button.addEventListener('click', () => ExitFrom(relation));
-            //         }else{
-            //             button.textContent = 'Join'
-            //
-            //             button.addEventListener('click', () => joinIn(relation, document.getElementById('team_password').value));
-            //         }
-            //
-            //     }
-            // )
+            if (i != null) form.appendChild(i);
             cell4.appendChild(form);
+
 
             row.appendChild(cell1);
             row.appendChild(cell2);
             row.appendChild(cell3);
             row.appendChild(cell4);
 
+
             tableBody.appendChild(row);
+
         }
         async function joinIn(relation) {
             const button = document.getElementById('button' + relation.team_id)
@@ -166,12 +167,12 @@
                 form.removeChild(i)
                 button.value='Exit'
                 button.onclick = () => exitFrom(relation);
+                form.appendChild(createGetIntoButton(relation.team_id))
 
             } catch (error){
                 alert(error.response.data.detail)
             }
             button.disabled = false
-            // window.location.href=window.location.href
         }
         async function exitFrom(relation) {
             const button = document.getElementById('button' + relation.team_id)
@@ -183,6 +184,7 @@
                 i.type="text";
                 i.name="password"
                 i.id="team_password" + relation.team_id
+                form.removeChild(document.getElementById('getInto' + relation.team_id))
                 form.appendChild(i);
                 button.onclick = () => joinIn(relation)
                 button.value = 'Join';
@@ -190,6 +192,11 @@
                 alert(error.response.data.detail)
             }
             button.disabled = false
+        }
+
+        function getToTeamPage(id){
+            sessionStorage.setItem('teamToken', id)
+            window.location.href = 'team.html'
         }
 
         window.onload = function() {
