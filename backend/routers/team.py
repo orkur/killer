@@ -32,10 +32,15 @@ def get_team(team_id: int, db: Session = Depends(get_db)):
 def get_teams(db: Session = Depends(get_db)):
     teams = db.query(Team).all()
     teams = [team.public for team in teams]
-    teams.sort(key=lambda team: team['name'])
-    # for team in teams:
-    #     print(team.name, " ", team.description)
+    teams.sort(key=lambda team: team['name'])  # unit tests, don't change
+    return teams
 
+
+@router.get("/relation/userTeams/")
+def list_all_joined_teams(user_id: int, db: Session = Depends(get_db)):
+    teams = db.query(Team.id, Team.name).filter(Team.members.any(id=user_id)).all()
+    teams = sorted(teams, key=lambda team: team[1])  # unit tests, don't change
+    teams = [team[0] for team in teams]
     return teams
 
 
@@ -59,14 +64,6 @@ def check_exist(team_id: int, user_id: int, db: Session = Depends(get_db)):
     if user and team and (user in team.members):
         return True
     return False
-
-
-@router.get("/relation/userTeams/")
-def list_all_joined_teams(user_id: int, db: Session = Depends(get_db)):
-    teams = db.query(Team.id, Team.name).filter(Team.members.any(id=user_id)).all()
-    teams = sorted(teams, key=lambda team: team[1])
-    teams = [team[0] for team in teams]
-    return teams
 
 
 @router.post("/relation/join/")
@@ -94,6 +91,8 @@ def exit_team(relation: JoinToInsert, db: Session = Depends(get_db)):
     if not user or not team:
         raise HTTPException(status_code=status.HTTP_418_IM_A_TEAPOT, detail="something unexpected had happeneds. "
                                                                             "Please refresh your page")
+    if user not in team.members:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="user has not yet joined this team.")
     team.members.remove(user)
     db.commit()
     return
