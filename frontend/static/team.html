@@ -1,10 +1,42 @@
 <!DOCTYPE html>
+<script>
+    const authToken = sessionStorage.getItem('authToken');
+    const teamToken = sessionStorage.getItem('teamToken')
+    if (!authToken) {
+        window.location.href = 'login.html';
+    }
+    if(!teamToken){
+        window.location.href = 'groups.html'
+    }
+</script>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Title</title>
 </head>
 <body>
-
+    <h2 id="userInfo">Hello </h2>
+    <h3 id="teamInfo">Team</h3>
+    <button type="button" onclick="goBack()">go back to teams page</button>
 </body>
+    <script>var exports = {};</script>
+    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        function  goBack(){
+            sessionStorage.removeItem('teamToken')
+            window.location.href = 'groups.html';
+        }
+        window.onload = function() {
+            document.getElementById('userInfo').textContent = "Hello " + jwtDecode(authToken).username + '!'
+            document.getElementById('teamInfo').textContent = "You are in " + teamToken.team_name + " team!"
+            if (!authToken) {
+                window.location.href = 'login.html';
+            }
+            if(!teamToken){
+                window.location.href = 'groups.html';
+            }
+        };
+    </script>
 </html>

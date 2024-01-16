@@ -194,8 +194,8 @@
             button.disabled = false
         }
 
-        function getToTeamPage(id){
-            sessionStorage.setItem('teamToken', id)
+        function getToTeamPage(id, name){
+            sessionStorage.setItem('teamToken', {id: id, name: name})
             window.location.href = 'team.html'
         }
 
