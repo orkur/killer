@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine, Column, Integer, String, Text, ForeignKey, Table
 
 from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import sessionmaker, relationship
 
 SQLALCHEMY_DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/users"
@@ -8,6 +9,13 @@ SQLALCHEMY_DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/users"
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
 Base = declarative_base()
+
+team_members = Table(
+    "team_members",
+    Base.metadata,
+    Column("user_id", Integer, ForeignKey("users.id")),
+    Column("team_id", Integer, ForeignKey("teams.id")),
+)
 
 
 def get_db():
@@ -28,18 +36,17 @@ class Team(Base):
     password = Column(String)
     members = relationship("User", secondary="team_members")
 
-    team_members = Table(
-        "team_members",
-        Base.metadata,
-        Column("user_id", Integer, ForeignKey("users.id")),
-        Column("team_id", Integer, ForeignKey("teams.id")),
-    )
+    @hybrid_property
+    def public(self):
+        return {"id": self.id, "name": self.name, "description": self.description}
+
 
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
     password = Column(String)
+    teams = relationship("Team", secondary="team_members", viewonly=True)
 
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

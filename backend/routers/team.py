@@ -31,9 +31,11 @@ def get_team(team_id: int, db: Session = Depends(get_db)):
 @router.get("/teams/")
 def get_teams(db: Session = Depends(get_db)):
     teams = db.query(Team).all()
-    teams.sort(key=lambda team: team.name)
+    teams = [team.public for team in teams]
+    teams.sort(key=lambda team: team['name'])
     # for team in teams:
     #     print(team.name, " ", team.description)
+
     return teams
 
 
@@ -49,6 +51,7 @@ def delete_team(team_id: int, db: Session = Depends(get_db)):
         raise HTTPException(status_code=404, detail="team not found")
 
 
+# INFO inefficient, many useless calls to database
 @router.get("/exist/")
 def check_exist(team_id: int, user_id: int, db: Session = Depends(get_db)):
     user = db.query(User).filter(User.id == user_id).first()
@@ -56,6 +59,14 @@ def check_exist(team_id: int, user_id: int, db: Session = Depends(get_db)):
     if user and team and (user in team.members):
         return True
     return False
+
+
+@router.get("/relation/userTeams/")
+def list_all_joined_teams(user_id: int, db: Session = Depends(get_db)):
+    teams = db.query(Team.id, Team.name).filter(Team.members.any(id=user_id)).all()
+    teams = sorted(teams, key=lambda team: team[1])
+    teams = [team[0] for team in teams]
+    return teams
 
 
 @router.post("/relation/join/")
