@@ -3,6 +3,7 @@ from sqlalchemy import create_engine, Column, Integer, String, Text, Boolean, Fo
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import sessionmaker, relationship
+from sqlalchemy.dialects.postgresql import ARRAY
 
 SQLALCHEMY_DATABASE_URL = "postgresql://postgres:postgres@localhost:5432/users"
 
@@ -37,6 +38,7 @@ class Team(Base):
     members = relationship("User", secondary="team_members")
     closed = Column(Boolean, default=False)
     started = Column(Boolean, default=False)
+
     @hybrid_property
     def public(self):
         return {"id": self.id, "name": self.name, "description": self.description}
@@ -48,6 +50,16 @@ class User(Base):
     username = Column(String, unique=True, index=True)
     password = Column(String)
     teams = relationship("Team", secondary="team_members", viewonly=True)
+
+
+class Game(Base):
+    __tablename__ = "games"
+    id = Column(Integer, primary_key=True, index=True)
+    team_id = Column(Integer, ForeignKey("teams.id"))
+    players = Column(ARRAY(Integer), index=True)
+    # user_id = Column(Integer, ForeignKey('users.id'))
+    # next_user_id = Column(Integer, ForeignKey('users.id'))
+    # previous_user_id = Column(Integer, ForeignKey('users.id'))
 
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

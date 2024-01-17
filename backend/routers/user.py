@@ -54,3 +54,7 @@ def get_members_from_team(team_id: int, db: Session = Depends(get_db)):
     members = db.query(User.id, User.username).filter(User.teams.any(id=team_id)).all()
     members = [{"id": member.id, "name": member.username} for member in members]
     return members
+
+
+def get_player_data(user_id: int, db: Session = Depends(get_db)):
+    return db.query(User.id, User.username).filter(User.id == user_id).first()

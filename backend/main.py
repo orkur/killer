@@ -4,6 +4,7 @@ from fastapi.security import HTTPBasic
 from sqlalchemy.orm import Session
 
 from backend.dependencies.tables import get_db, User
+from backend.gameLogic import graph
 from backend.routers import team, user
 
 app = FastAPI()
@@ -19,6 +20,7 @@ app.add_middleware(
 )
 app.include_router(team.router)
 app.include_router(user.router)
+app.include_router(graph.router)
 
 @app.get("/debug/")
 def get_debug_info(db: Session = Depends(get_db)):
