@@ -57,9 +57,6 @@ class Game(Base):
     id = Column(Integer, primary_key=True, index=True)
     team_id = Column(Integer, ForeignKey("teams.id"))
     players = Column(ARRAY(Integer), index=True)
-    # user_id = Column(Integer, ForeignKey('users.id'))
-    # next_user_id = Column(Integer, ForeignKey('users.id'))
-    # previous_user_id = Column(Integer, ForeignKey('users.id'))
 
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

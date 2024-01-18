@@ -19,3 +19,8 @@ class JoinToInsert(BaseModel):
     team_id: int
     user_id: int
     password: str = ""
+
+
+class AdminAndTeam(BaseModel):
+    team_id: int
+    user_id: int

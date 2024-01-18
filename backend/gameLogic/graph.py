@@ -1,3 +1,4 @@
+import copy
 from random import random, shuffle
 
 from fastapi import Depends, APIRouter, HTTPException
@@ -52,10 +53,23 @@ def is_winner(team_id: int, db: Session = Depends(get_db)):
 
 @router.post('/fooo/')
 def delete_player(team_id: int, user_id: int, db: Session = Depends(get_db)):
-    game = db.execute(select(Game).filter(Game.team_id == team_id)).scalar_one()
+    game = db.query(Game).filter(Game.team_id == team_id).first()
+    if game is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="game not found")
     print(game.players)
-    game.players.remove(user_id)
+    data = copy.deepcopy(game.players)
+    data.remove(user_id)
+    game.players = data
     print(game.players)
-    db.flush()
     db.commit()
-    return
+    return "end"
+
+@router.get('/test/')
+def get_game(team_id: int, db: Session = Depends(get_db)):
+    return db.query(Game).filter(Game.team_id == team_id).first()
+
+@router.post('/debug/delete/')
+def delete_game(game_id: int, db: Session = Depends(get_db)):
+    game = db.query(Game).filter(Game.id == game_id).first()
+    db.delete(game)
+    db.commit()

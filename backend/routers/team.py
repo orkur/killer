@@ -3,7 +3,8 @@ from sqlalchemy.orm import Session
 from starlette import status
 
 from backend.dependencies.tables import Team, get_db, User
-from backend.models.models import TeamToInsert, JoinToInsert
+from backend.gameLogic.graph import create_graph
+from backend.models.models import TeamToInsert, JoinToInsert, AdminAndTeam
 
 router = APIRouter()
 
@@ -109,17 +110,49 @@ def exit_team(relation: JoinToInsert, db: Session = Depends(get_db)):
     team = db.query(Team).filter(Team.id == relation.team_id).first()
 
     if not user or not team:
-        raise HTTPException(status_code=status.HTTP_418_IM_A_TEAPOT, detail="something unexpected had happeneds. "
+        raise HTTPException(status_code=status.HTTP_418_IM_A_TEAPOT, detail="something unexpected had happens. "
                                                                             "Please refresh your page")
     if user not in team.members:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="user has not yet joined this team.")
     team.members.remove(user)
     db.commit()
-    return
+    return {"message": "user exited successfully"}
+
 
 @router.get("/admin/")
-def is_admin(team_id: int, user_id: int,db: Session = Depends(get_db)):
-    if db.query(Team).filter(Team.id==team_id, Team.created_by == user_id).first():
+def is_admin(team_id: int, user_id: int, db: Session = Depends(get_db)):
+    if db.query(Team).filter(Team.id == team_id, Team.created_by == user_id).first():
         return True
     else:
         return False
+
+@router.get("/gameStarted/")
+def is_game_started(team_id: int, db: Session = Depends(get_db)):
+    start_game = db.query(Team.started).filter(Team.id == team_id).first()
+    return start_game[0]
+@router.post("/access/")
+def change_accessibility_of_team(team_id: int, user_id: int, close: bool, db: Session = Depends(get_db)):
+    team = db.query(Team).filter(Team.id == team_id).first()
+    if team.created_by != user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="user isn't an admin of this team.")
+    if team.started:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail="user cannot change access when game started.")
+    team.closed = close
+    return {"message": "accessibility of team has been updated."}
+
+
+@router.post("/startGame/")
+def start_game(admin: AdminAndTeam, db: Session = Depends(get_db)):
+    team_id = admin.team_id
+    user_id = admin.user_id
+    print(team_id, user_id)
+    team = db.query(Team).filter(Team.id == team_id).first()
+    if team.created_by != user_id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="user isn't an admin of this team.")
+    team.closed = True
+    team.started = True
+    db.commit()
+    # create_graph(team_id, db)
+
+    return {"message": "game created"}
