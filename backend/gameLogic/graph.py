@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 from starlette import status
 
-from backend.dependencies.tables import Team, get_db, User, Game
+from backend.dependencies.tables import Team, get_db, User, Game, KillRequest
 from backend.models.models import TeamToInsert, JoinToInsert
 from backend.routers.user import get_members_from_team, get_player_data
 
@@ -33,12 +33,11 @@ def create_graph(team_id: int, db: Session = Depends(get_db)):
 def find_next_player(team_id: int, user_id: int, db: Session = Depends(get_db)):
     game = db.query(Game).filter(Game.team_id == team_id).first()
     players = game.players
-    print(players)
-    print(players[(players.index(user_id) + 1) % len(players)])
+
     next_player_id = players[(players.index(user_id) + 1) % len(players)]
     next_player = get_player_data(next_player_id, db)
     print(next_player)
-    return {"id": next_player.id, "name": next_player.username}
+    return next_player.username
 
 
 @router.get("/team/winner/")
@@ -51,6 +50,7 @@ def is_winner(team_id: int, db: Session = Depends(get_db)):
     else:
         return {}
 
+
 @router.post('/fooo/')
 def delete_player(team_id: int, user_id: int, db: Session = Depends(get_db)):
     game = db.query(Game).filter(Game.team_id == team_id).first()
@@ -62,14 +62,30 @@ def delete_player(team_id: int, user_id: int, db: Session = Depends(get_db)):
     game.players = data
     print(game.players)
     db.commit()
-    return "end"
+    return {"message": "user has been killed successfully"}
+
 
 @router.get('/test/')
 def get_game(team_id: int, db: Session = Depends(get_db)):
     return db.query(Game).filter(Game.team_id == team_id).first()
 
-@router.post('/debug/delete/')
-def delete_game(game_id: int, db: Session = Depends(get_db)):
-    game = db.query(Game).filter(Game.id == game_id).first()
-    db.delete(game)
+
+@router.post('/team/killRequest/')
+def kill_attempt(team_id: int, user_id: int, db: Session = Depends(get_db)):
+    game = db.query(Game).filter(Game.team_id == team_id)
+    if game is None:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"game not found")
+    players = game.players
+    next_player_id = players[(players.index(user_id) + 1) % len(players)]
+    request = KillRequest(team_id=team_id, player=next_player_id)
+    db.add(request)
     db.commit()
+    return {"message": "kill request has been sent"}
+
+
+@router.get('/team/check/')
+def check_kill_request(team_id: int, user_id: int, db: Session = Depends(get_db)):
+    request = db.query(KillRequest).filter(KillRequest.team_id == team_id, KillRequest.user_id == user_id).first()
+    if (request):
+        return True
+    return False

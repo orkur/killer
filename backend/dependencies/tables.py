@@ -58,6 +58,12 @@ class Game(Base):
     team_id = Column(Integer, ForeignKey("teams.id"))
     players = Column(ARRAY(Integer), index=True)
 
+class KillRequest(Base):
+    __tablename__ = "kill_requests"
+    id = Column(Integer, primary_key=True, index=True)
+    team_id = Column(Integer, ForeignKey("teams.id"))
+    user_id = Column(Integer, ForeignKey("users.id"))
+
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

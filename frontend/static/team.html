@@ -6,7 +6,7 @@
         window.location.href = 'login.html';
     }
     if(!teamToken){
-        window.location.href = 'groups.html'
+        window.location.href = 'groups.html';
     }
 </script>
 <html lang="en">
@@ -77,7 +77,7 @@
                 user_id: jwtDecode(authToken).id
             };
             axios.post("http://localhost:5000/startGame/", post).then(response => {
-                alert(response.message)
+                alert("game has been started!")
                 button = document.getElementById("start")
                 button.value = "Check your victim";
                 button.onclick = () => victim()

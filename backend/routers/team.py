@@ -153,6 +153,6 @@ def start_game(admin: AdminAndTeam, db: Session = Depends(get_db)):
     team.closed = True
     team.started = True
     db.commit()
-    # create_graph(team_id, db)
+    create_graph(team_id, db)
 
     return {"message": "game created"}
