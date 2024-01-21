@@ -32,6 +32,11 @@
             }
             axios.post('http://localhost:5000/team/killRequest/', post).then(response => {
                 alert("kill request has been sent")
+            }).catch(error => {
+                console.log(error)
+                if( error.response.status == 409){
+                    alert(error.response.data.detail)
+                }
             })
         }
         function  goBack(){
@@ -53,16 +58,17 @@
                     const label = document.createElement("label")
                     label.textContent = "Somebody clicked that you're dead, do you agree?"
                     const input = document.createElement("input")
+                    input.id = "password"
                     input.type = "password"
                     input.name = "password"
                     input.placeholder = "provide with password"
                     const approve = document.createElement("button")
                     approve.type = "button"
-                    // approve.onclick = TODO
+                    approve.onclick = () => Approve()
                     approve.textContent = "I'm dead"
                     const disapprove = document.createElement("button")
                     disapprove.type = "button"
-                    // disapprove.onclick = TODO
+                    disapprove.onclick = () => Disapprove()
                     disapprove.textContent = "I'm NOT dead"
                     form.appendChild(label)
                     form.appendChild(document.createElement("br"))
@@ -73,6 +79,29 @@
                 }
             });
         }
+        function Disapprove(){
+            const post = {
+               team_id: teamToken.id,
+               user_id: jwtDecode(authToken).id
+            }
+            axios.post("http://localhost:5000/team/disagree/", post).then(() => {
+                document.getElementById("killButton").disabled = false
+                document.getElementById("killForm").remove()
+            });
+        }
+        function Approve(){
+            const post = {
+                team_id: teamToken.id,
+                user_id: jwtDecode(authToken).id,
+                password: document.getElementById('password').value
+            }
+            axios.post('http://localhost:5000/team/delete/', post).then(response => {
+                window.location.href = 'dead.html'
+                }
+            ).catch(error => {
+                alert("Invalid password")
+                })
+        }
         function victim(){
             const text = document.getElementById('victimInfo')
             axios.get('http://localhost:5000/team/nextPlayer/',{params : {team_id: teamToken.id, user_id: jwtDecode(authToken).id
@@ -82,11 +111,23 @@
             })
 
         }
+        function  Dead(){
+            axios.get('http://localhost:5000/team/alive/',{params : {team_id: teamToken.id, user_id: jwtDecode(authToken).id
+            }}).then(response => {
+                if(!response.data){
+                    console.log("ded")
+                    window.location.href = 'dead.html'
+                }
+            })
+            return false
+        }
         window.onload = function() {
-            document.getElementById('userInfo').textContent = "Hello " + jwtDecode(authToken).username + '!'
-            document.getElementById('teamInfo').textContent = "You are in \"" + teamToken.name + "\" team!"
-            victim()
-            isKilled()
+            if(!Dead()){
+                document.getElementById('userInfo').textContent = "Hello " + jwtDecode(authToken).username + '!'
+                document.getElementById('teamInfo').textContent = "You are in \"" + teamToken.name + "\" team!"
+                victim()
+                isKilled()
+            }
             if (!authToken) {
                 window.location.href = 'login.html';
             }

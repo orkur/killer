@@ -49,6 +49,7 @@ def register_user(new_user: UserToInsert, db: Session = Depends(get_db)):
     access_token = create_jwt_token(data=user_data, expires_delta=access_token_expires)
     return {"access_token": access_token, "token_type": "bearer", "message": "User registered successfully"}
 
+
 @router.get("/players/")
 def get_members_from_team(team_id: int, db: Session = Depends(get_db)):
     members = db.query(User.id, User.username).filter(User.teams.any(id=team_id)).all()
@@ -58,3 +59,10 @@ def get_members_from_team(team_id: int, db: Session = Depends(get_db)):
 
 def get_player_data(user_id: int, db: Session = Depends(get_db)):
     return db.query(User.id, User.username).filter(User.id == user_id).first()
+
+
+def check_registered_user(user_id: int, password: str, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user or not verify_password(password, user.password):
+        return False
+    return True
