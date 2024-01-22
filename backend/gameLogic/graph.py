@@ -33,7 +33,7 @@ def create_graph(team_id: int, db: Session = Depends(get_db)):
 def find_next_player(team_id: int, user_id: int, db: Session = Depends(get_db)):
     game = db.query(Game).filter(Game.team_id == team_id).first()
     players = game.players
-    if  user_id not in players:
+    if user_id not in players:
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Player does not exist")
     next_player_id = players[(players.index(user_id) + 1) % len(players)]
     next_player = get_player_data(next_player_id, db)
@@ -52,7 +52,12 @@ def is_winner(team_id: int, db: Session = Depends(get_db)):
         return {}
 
 
-@router.post('/team/delete')
+@router.get("/team/number/{team_id}")
+def get_number_of_players(team_id: int, db: Session = Depends(get_db)) -> int:
+    game = db.query(Game).filter(Game.team_id == team_id).first()
+    return len(game.players)
+
+@router.post('/team/delete/')
 def delete_player(info: dict, db: Session = Depends(get_db)):
     team_id, user_id = int(info["team_id"]), int(info["user_id"])
 
@@ -77,10 +82,10 @@ def get_game(team_id: int, db: Session = Depends(get_db)):
 
 
 @router.post('/team/killRequest/')
-def kill_attempt(info : dict, db: Session = Depends(get_db)):
+def kill_attempt(info: dict, db: Session = Depends(get_db)):
     team_id, user_id = info['team_id'], info['user_id']
-    game : Game = db.query(Game).filter(Game.team_id == team_id).first()
-    print(game.id, game.team_id,game.players)
+    game: Game = db.query(Game).filter(Game.team_id == team_id).first()
+    print(game.id, game.team_id, game.players)
     if game is None:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"game not found")
     players = game.players

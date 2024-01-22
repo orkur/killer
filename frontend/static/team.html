@@ -113,7 +113,11 @@
             tableBody.appendChild(row);
 
         }
-
+        function numberOfPlayer(){
+            axios.get('http://localhost:5000/team/number/' + teamToken.id).then(response => {
+                document.getElementById('numberOfPlayers').textContent = "there are " + response.data + " people alive";
+            })
+        }
         window.onload = function() {
             document.getElementById('userInfo').textContent = "Hello " + jwtDecode(authToken).username + '!'
             document.getElementById('teamInfo').textContent = "You are in \"" + teamToken.name + "\" team!"
@@ -125,6 +129,7 @@
             }
             getUsers();
             isAdmin();
+            numberOfPlayer();
         };
     </script>
 </body>
