@@ -137,16 +137,17 @@
             if (signed) {
                 button.onclick = () => exitFrom(relation);
                 button.value = 'Exit';
-                form.appendChild(createGetIntoButton(relation))
             } else {
                 i = document.createElement("input");
                 i.type = "text";
                 i.name = "password";
                 i.id = "team_password" + team.id;
+                i.placeholder = "provide password here"
                 button.onclick = () => joinIn(relation);
                 button.value = 'Join';
             }
             form.appendChild(button);
+            if(signed) form.appendChild(createGetIntoButton(relation))
             if (i != null) form.appendChild(i);
             cell4.appendChild(form);
 
@@ -160,43 +161,57 @@
             tableBody.appendChild(row);
 
         }
-        async function joinIn(relation) {
-            const button = document.getElementById('button' + relation.team_id)
-            button.disabled = true
-            const i = document.getElementById('team_password' + relation.team_id)
-            relation['password'] = i.value
-            console.log(relation['password'])
-            try {
-                await axios.post('http://localhost:5000/relation/join/', relation)
-                const form = document.getElementById('form' + relation.team_id)
-                form.removeChild(i)
-                button.value='Exit'
-                button.onclick = () => exitFrom(relation);
-                form.appendChild(createGetIntoButton(relation))
 
-            } catch (error){
-                alert(error.response.data.detail)
-            }
-            button.disabled = false
+        async function joinIn(relation) {
+
+            axios.get('http://localhost:5000/isClosedGame/' + relation.team_id).then(async response => {
+                if (response.data) {
+                    alert('Game has started, you can\'t join')
+                    return
+                }
+                const button = document.getElementById('button' + relation.team_id)
+                button.disabled = true
+                const i = document.getElementById('team_password' + relation.team_id)
+                relation['password'] = i.value
+                console.log(relation['password'])
+                try {
+                    await axios.post('http://localhost:5000/relation/join/', relation)
+                    const form = document.getElementById('form' + relation.team_id)
+                    form.removeChild(i)
+                    button.value = 'Exit'
+                    button.onclick = () => exitFrom(relation);
+                    form.appendChild(createGetIntoButton(relation))
+
+                } catch (error) {
+                    alert(error.response.data.detail)
+                }
+                button.disabled = false
+            });
         }
         async function exitFrom(relation) {
-            const button = document.getElementById('button' + relation.team_id)
-            button.disabled = true
-            try {
-                await axios.post('http://localhost:5000/relation/exit/', relation)
-                const form = document.getElementById('form' + relation.team_id);
-                const i = document.createElement("input");
-                i.type="text";
-                i.name="password"
-                i.id="team_password" + relation.team_id
-                form.removeChild(document.getElementById('getInto' + relation.team_id))
-                form.appendChild(i);
-                button.onclick = () => joinIn(relation)
-                button.value = 'Join';
-            } catch (error){
-                alert(error.response.data.detail)
-            }
-            button.disabled = false
+            axios.get('http://localhost:5000/isClosedGame/' + relation.team_id).then(async response => {
+                if (response.data) {
+                    alert('Game has started, you can\'t exit')
+                    return
+                }
+                const button = document.getElementById('button' + relation.team_id)
+                button.disabled = true
+                try {
+                    await axios.post('http://localhost:5000/relation/exit/', relation)
+                    const form = document.getElementById('form' + relation.team_id);
+                    const i = document.createElement("input");
+                    i.type = "text";
+                    i.name = "password"
+                    i.id = "team_password" + relation.team_id
+                    form.removeChild(document.getElementById('getInto' + relation.team_id))
+                    form.appendChild(i);
+                    button.onclick = () => joinIn(relation)
+                    button.value = 'Join';
+                } catch (error) {
+                    alert(error.response.data.detail)
+                }
+                button.disabled = false
+            });
         }
 
         function getToTeamPage(id, name){

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<script>
+    const authToken = sessionStorage.getItem('authToken');
+    const teamToken = JSON.parse(sessionStorage.getItem('teamToken'))
+    const winToken = JSON.parse(sessionStorage.getItem('winner'))
+    if (!authToken) {
+        window.location.href = 'login.html';
+    }
+    if(!teamToken || !winToken){
+        window.location.href = 'groups.html'
+    }
+</script>
+<head>
+    <meta charset="UTF-8">
+    <title>Winner</title>
+</head>
+<body>
+    <h1 id="winnerInfo"></h1>
+    <button type="button" onclick="goBack()">go back to teams page</button>
+</body>
+<script>
+    function  goBack(){
+        window.location.href = 'groups.html'
+    }
+    window.onload = function() {
+        document.getElementById('winnerInfo').textContent = "The winner of \"" + winToken.team + "\" is " + winToken.name + '!'
+
+    }
+</script>
+</html>

@@ -49,7 +49,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String, unique=True, index=True)
     password = Column(String)
-    teams = relationship("Team", secondary="team_members", viewonly=True)
+    teams = relationship("Team", secondary="team_members", viewonly=True, cascade='all, delete')
 
 
 class Game(Base):
@@ -61,8 +61,8 @@ class Game(Base):
 class KillRequest(Base):
     __tablename__ = "kill_requests"
     id = Column(Integer, primary_key=True, index=True)
-    team_id = Column(Integer, ForeignKey("teams.id"))
-    user_id = Column(Integer, ForeignKey("users.id"))
+    team_id = Column(Integer, ForeignKey("teams.id"), nullable=False)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
 
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

@@ -2,7 +2,7 @@ from fastapi import Depends, APIRouter, HTTPException
 from sqlalchemy.orm import Session
 from starlette import status
 
-from backend.dependencies.tables import Team, get_db, User
+from backend.dependencies.tables import Team, get_db, User, Game, KillRequest
 from backend.gameLogic.graph import create_graph
 from backend.models.models import TeamToInsert, JoinToInsert, AdminAndTeam
 
@@ -23,6 +23,7 @@ def add_team(team: TeamToInsert, db: Session = Depends(get_db)):
 @router.get("/team/{team_id}")
 def get_team(team_id: int, db: Session = Depends(get_db)):
     team = db.query(Team).filter(Team.id == team_id).first()
+    print(team, " prz")
     if team:
         return team
     else:
@@ -65,11 +66,14 @@ def list_of_relation_with_teams(user_id: int, db: Session = Depends(get_db)):
     return teams
 
 
-@router.delete("/team/")
+@router.delete("/team/{team_id}")
 def delete_team(team_id: int, db: Session = Depends(get_db)):
     team = db.query(Team).filter(Team.id == team_id).first()
+
     print(team.id, " ", team.name, " ", team.description)
     if team:
+        game = db.query(Game).filter(Game.team_id == team_id).delete()
+        kill = db.query(KillRequest).filter(KillRequest.team_id == team_id).delete()
         db.delete(team)
         db.commit()
         return {"message": "team deleted"}
@@ -129,6 +133,8 @@ def is_admin(team_id: int, user_id: int, db: Session = Depends(get_db)):
 @router.get("/gameStarted/")
 def is_game_started(team_id: int, db: Session = Depends(get_db)):
     start_game = db.query(Team.started).filter(Team.id == team_id).first()
+    if start_game is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="game not found")
     return start_game[0]
 @router.post("/access/")
 def change_accessibility_of_team(team_id: int, user_id: int, close: bool, db: Session = Depends(get_db)):
@@ -156,3 +162,8 @@ def start_game(admin: AdminAndTeam, db: Session = Depends(get_db)):
     create_graph(team_id, db)
 
     return {"message": "game created"}
+
+@router.get("/isClosedGame/{team_id}")
+def is_closed_game(team_id: int, db: Session = Depends(get_db)):
+    team = db.query(Team).filter(Team.id == team_id).first()
+    return team.closed

@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
+<script>var exports = {};</script>
+<script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
     const authToken = sessionStorage.getItem('authToken');
     const teamToken = JSON.parse(sessionStorage.getItem('teamToken'))
@@ -9,6 +12,10 @@
     if(!teamToken){
         window.location.href = 'groups.html'
     }
+    axios.get("http://localhost:5000/team/" + teamToken.id).catch(() => {
+        sessionStorage.removeItem('teamToken')
+        window.location.href = 'groups.html'
+    })
 </script>
 <head>
     <meta charset="UTF-8">
@@ -21,9 +28,6 @@
     <button id="killButton" type="button" onclick="killAttempt()">I've killed!!</button>
     <button type="button" onclick="goBack()">go back to teams page</button>
     <h3 id="killedInfo"></h3>
-    <script>var exports = {};</script>
-    <script src="https://cdn.jsdelivr.net/npm/jwt-decode@4.0.0/build/cjs/index.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
         function killAttempt(){
             const post = {
@@ -112,17 +116,29 @@
 
         }
         function  Dead(){
-            axios.get('http://localhost:5000/team/alive/',{params : {team_id: teamToken.id, user_id: jwtDecode(authToken).id
-            }}).then(response => {
-                if(!response.data){
-                    console.log("ded")
-                    window.location.href = 'dead.html'
+            axios.get('http://localhost:5000/team/winner/' + teamToken.id).then(response => {
+                if(response.data == null){
+                    axios.get('http://localhost:5000/team/alive/',{params : {team_id: teamToken.id, user_id: jwtDecode(authToken).id
+                    }}).then(response => {
+                        if(!response.data){
+                            console.log("ded")
+                            window.location.href = 'dead.html'
+                        }
+                    })
+                }else
+                {
+                    sessionStorage.setItem("winner", JSON.stringify({team : teamToken.name, name : response.data.name}))
+                    window.location.href = 'winner.html'
                 }
             })
+
             return false
         }
+        function Only(){
+        }
         window.onload = function() {
-            if(!Dead()){
+            if(!Dead() || !Only()){
+
                 document.getElementById('userInfo').textContent = "Hello " + jwtDecode(authToken).username + '!'
                 document.getElementById('teamInfo').textContent = "You are in \"" + teamToken.name + "\" team!"
                 victim()

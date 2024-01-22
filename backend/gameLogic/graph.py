@@ -13,7 +13,7 @@ from backend.routers.user import get_members_from_team, get_player_data, check_r
 router = APIRouter()
 
 
-@router.post("/team/makeGraph/")
+@router.post("/team/makeGraph/{team_id}")
 def create_graph(team_id: int, db: Session = Depends(get_db)):
     members = get_members_from_team(team_id, db)
     members = [member['id'] for member in members]
@@ -26,12 +26,20 @@ def create_graph(team_id: int, db: Session = Depends(get_db)):
     db.add(game)
     db.commit()
     db.refresh(game)
+    team = db.query(Team).filter(Team.id == team_id).first()
+    if team is None:
+        return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Team does not exist")
+    team.closed = True
+    team.started = True
+    db.commit()
     return
 
 
 @router.get("/team/nextPlayer/")
 def find_next_player(team_id: int, user_id: int, db: Session = Depends(get_db)):
     game = db.query(Game).filter(Game.team_id == team_id).first()
+    if game is None:
+        return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="game does not exist")
     players = game.players
     if user_id not in players:
         return HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Player does not exist")
@@ -41,20 +49,22 @@ def find_next_player(team_id: int, user_id: int, db: Session = Depends(get_db)):
     return next_player.username
 
 
-@router.get("/team/winner/")
+@router.get("/team/winner/{team_id}")
 def is_winner(team_id: int, db: Session = Depends(get_db)):
     game = db.query(Game).filter(Game.team_id == team_id).first()
     print(game.players)
     if len(game.players) == 1:
         player = get_player_data(game.players[0], db)
-        return {"id": player.id, "name": player.username}
+        return { "name": player.username}
     else:
-        return {}
+        return None
 
 
 @router.get("/team/number/{team_id}")
 def get_number_of_players(team_id: int, db: Session = Depends(get_db)) -> int:
     game = db.query(Game).filter(Game.team_id == team_id).first()
+    if game is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="the game does not started")
     return len(game.players)
 
 @router.post('/team/delete/')
