@@ -146,15 +146,10 @@
         window.onload = function() {
             document.getElementById('userInfo').textContent = "Hello " + jwtDecode(authToken).username + '!'
             document.getElementById('teamInfo').textContent = "You are in \"" + teamToken.name + "\" team!"
-            if (!authToken) {
-                window.location.href = 'login.html';
-            }
-            // if (!teamToken) {
-            //     window.location.href = 'groups.html';
-            // }
-            //TODO, dodać przycisk usuwania gry, weryfikacje czy team istnieje, oraz przycisk usuwania gracza z gry
-            //TODO, ew jakaś forma banicji
-            //TODO po tym zostanie tylko wrzucenie w chmure i zabezpieczenie lepsze za pomocą jwt, myślę że od zera
+            //TODO, delete user from game
+            //TODO, eventually banning from game
+            //TODO  cloud service
+            //TODO  better jwt
             getUsers();
             isAdmin();
             numberOfPlayer();
